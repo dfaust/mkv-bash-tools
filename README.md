@@ -1,7 +1,8 @@
 mkv-transcode-flac
 ==================
 
-A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis while preserving the track's name and language and it's default and forced flags.  
+A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis while preserving the track's name and language and it's default and forced flags.
+
 Requires mktemp, mkvmerge, mkvextract and oggenc (with FLAC decoder enabled)
 
 Usage:  

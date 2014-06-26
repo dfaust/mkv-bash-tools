@@ -1,0 +1,105 @@
+#!/bin/bash
+#
+# Version 1
+#
+# (C) 2014 Daniel Faust <hessijames@gmail.com>
+#
+# A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis 
+# while preserving the track's name and language and it's default and forced flags.
+#
+# Requires mktemp, mkvmerge, mkvextract and oggenc (with FLAC decoder enabled)
+#
+# Usage:
+# chmod +x mkv-transcode-flac
+# ./mkv-transcode-flac "My File.mkv"
+#
+# This will create a new file called "My File [Ogg Vorbis].mkv".
+#
+# For batch converting all .mkv files in the current directoy
+# copy mkv-transcode-flac to a directory in your PATH and execute:
+#
+# find -iname "*.mkv" -exec mkv-transcode-flac '{}' \;
+
+
+if [[ "$1" == "" ]] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+	echo
+	echo "Transcode single file:"
+	echo "mkv-transcode-flac file.mkv"
+	echo
+	echo "Transcode multiple files:"
+	echo "find -iname \"*.mkv\" -exec mkv-transcode-flac '{}' \;"
+	echo
+	exit
+fi
+
+
+file_name=$1
+
+tmp_dir=$(mktemp -d)
+
+trap 'rm -r "$tmp_dir"' EXIT
+
+option_file_name="$tmp_dir/options_file"
+
+IFS='
+'
+
+tracks=$(mkvmerge --identify-verbose "$file_name" | grep "A_FLAC")
+
+track_ids_string=""
+for track in $tracks; do
+	[[ "$track" =~ Track\ ID\ ([0-9]+) ]] &&
+		track_id=${BASH_REMATCH[1]}
+	[[ "$track" =~ language:([a-z]+) ]] &&
+		language=${BASH_REMATCH[1]}
+	[[ "$track" =~ track_name:([^ ]+) ]] &&
+		track_name=${BASH_REMATCH[1]}
+	[[ "$track" =~ default_track:([0-1]) ]] &&
+		default_track=${BASH_REMATCH[1]}
+	[[ "$track" =~ forced_track:([0-1]) ]] &&
+		forced_track=${BASH_REMATCH[1]}
+
+	if [[ "$track_name" == "" ]]; then
+		echo "$track"
+		echo "Error: Can't read track id"
+		rm -r "$tmp_dir"
+		exit
+	fi
+
+	mkvextract tracks "$file_name" "$track_id:$tmp_dir/$track_id.flac"
+	oggenc --quality=6 -o "$tmp_dir/$track_id.ogg" "$tmp_dir/$track_id.flac"
+	rm "$tmp_dir/$track_id.flac"
+
+	track_ids_string="$track_ids_string,$track_id"
+
+	echo "--audio-tracks" >> $option_file_name
+	echo "0" >> $option_file_name
+	if [[ "$track_name" != "" ]]; then
+		track_name=${track_name/\\s/\ }  # replace '\s' with ' '
+		track_name=${track_name/\\2/\"}  # replace '\2' with '"'
+		track_name=${track_name/\\c/:}   # replace '\c' with ':'
+		track_name=${track_name/\\h/#}   # replace '\h' with '#'
+# 		track_name=${track_name/\\\\/\\} # replace '\\' with '\' BUG doesn't work
+		track_name=$(echo "$track_name" | sed 's/flac/Ogg Vorbis/i')
+		echo "--track-name" >> $option_file_name
+		echo "0:$track_name" >> $option_file_name
+	fi
+	if [[ "$language" != "" ]]; then
+		echo "--language" >> $option_file_name
+		echo "0:$language" >> $option_file_name
+	fi
+	if [[ "$default_track" != "" ]]; then
+		echo "--default-track" >> $option_file_name
+		echo "0:$default_track" >> $option_file_name
+	fi
+	if [[ "$forced_track" != "" ]]; then
+		echo "--forced-track" >> $option_file_name
+		echo "0:$forced_track" >> $option_file_name
+	fi
+	echo "$tmp_dir/$track_id.ogg" >> $option_file_name
+done
+track_ids_string=${track_ids_string:1} # remove first comma
+
+if [[ "$track_ids_string" != "" ]]; then
+	mkvmerge -o "${file_name%.*} [Ogg Vorbis].mkv" --audio-tracks "!$track_ids_string" "$file_name" @$option_file_name
+fi

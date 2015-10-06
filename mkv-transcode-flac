@@ -59,7 +59,7 @@ for track in $tracks; do
 	[[ "$track" =~ forced_track:([0-1]) ]] &&
 		forced_track=${BASH_REMATCH[1]}
 
-	if [[ "$track_name" == "" ]]; then
+	if [[ "$track_id" == "" ]]; then
 		echo "$track"
 		echo "Error: Can't read track id"
 		rm -r "$tmp_dir"

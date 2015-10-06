@@ -44,7 +44,7 @@ option_file_name="$tmp_dir/options_file"
 IFS='
 '
 
-tracks=$(LANG=en_US.utf8 mkvmerge --identify-verbose "$file_name" | grep "A_FLAC")
+tracks=$(LANG=en_US.utf8 mkvmerge --identify-verbose "$file_name" | grep -E "(A_FLAC|A_PCM)")
 
 track_ids_string=""
 for track in $tracks; do
@@ -59,6 +59,13 @@ for track in $tracks; do
 	[[ "$track" =~ forced_track:([0-1]) ]] &&
 		forced_track=${BASH_REMATCH[1]}
 
+	ext=""
+	if [[ "$track" =~ A_FLAC ]]; then
+		ext="flac"
+	elif [[ "$track" =~ A_PCM ]]; then
+		ext="pcm"
+	fi
+
 	if [[ "$track_id" == "" ]]; then
 		echo "$track"
 		echo "Error: Can't read track id"
@@ -66,9 +73,9 @@ for track in $tracks; do
 		exit
 	fi
 
-	mkvextract tracks "$file_name" "$track_id:$tmp_dir/$track_id.flac"
-	oggenc --quality=6 -o "$tmp_dir/$track_id.ogg" "$tmp_dir/$track_id.flac"
-	rm "$tmp_dir/$track_id.flac"
+	mkvextract tracks "$file_name" "$track_id:$tmp_dir/$track_id.$ext"
+	oggenc --quality=6 -o "$tmp_dir/$track_id.ogg" "$tmp_dir/$track_id.$ext"
+	rm "$tmp_dir/$track_id.$ext"
 
 	track_ids_string="$track_ids_string,$track_id"
 
@@ -80,7 +87,7 @@ for track in $tracks; do
 		track_name=${track_name/\\c/:}   # replace '\c' with ':'
 		track_name=${track_name/\\h/#}   # replace '\h' with '#'
 # 		track_name=${track_name/\\\\/\\} # replace '\\' with '\' BUG doesn't work
-		track_name=$(echo "$track_name" | sed 's/flac/Ogg Vorbis/i')
+		track_name=$(echo "$track_name" | sed -r 's/(flac|pcm)/Ogg Vorbis/i')
 		echo "--track-name" >> $option_file_name
 		echo "0:$track_name" >> $option_file_name
 	fi

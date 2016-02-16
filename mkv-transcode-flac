@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Version 1
+# Version 2
 #
-# (C) 2014 Daniel Faust <hessijames@gmail.com>
+# (C) 2016 Daniel Faust <hessijames@gmail.com>
 #
 # A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis 
 # while preserving the track's name and language and it's default and forced flags.
@@ -31,6 +31,12 @@ if [[ "$1" == "" ]] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
 	echo
 	exit
 fi
+
+
+hash mktemp 2>/dev/null || { echo >&2 "Error: Command mktemp not found"; exit 1; }
+hash mkvmerge 2>/dev/null || { echo >&2 "Error: Command mkvmerge not found"; exit 1; }
+hash mkvextract 2>/dev/null || { echo >&2 "Error: Command mkvextract not found"; exit 1; }
+hash oggenc 2>/dev/null || { echo >&2 "Error: Command oggenc not found"; exit 1; }
 
 
 file_name=$1

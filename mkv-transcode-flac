@@ -44,7 +44,7 @@ option_file_name="$tmp_dir/options_file"
 IFS='
 '
 
-tracks=$(LANG=en_US.utf8 mkvmerge --identify-verbose "$file_name" | grep -E "(A_FLAC|A_PCM)")
+tracks=$(LANG=en_US.utf8 LANGUAGE=en_US.utf8 mkvmerge --identify-verbose "$file_name" | grep -E "(A_FLAC|A_PCM)")
 
 track_ids_string=""
 for track in $tracks; do

@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# Version 1
+#
+# (C) 2016 Daniel Faust <hessijames@gmail.com>
+#
+# A BASH script that removes the audio track with the specified language from a matroska file.
+#
+# Requires mkvmerge
+#
+# Usage:
+# chmod +x mkv-remove-language
+# ./mkv-remove-language "My File.mkv" "eng"
+#
+# This will create a new file called "My File [without eng].mkv".
+#
+# For batch processing all .mkv files in the current directoy
+# copy mkv-remove-language to a directory in your PATH and execute:
+#
+# find -iname "*.mkv" -exec mkv-remove-language '{}' "lang" \;
+
+
+if [[ "$1" == "" ]] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+	echo
+	echo "Process single file:"
+	echo "mkv-remove-language file.mkv"
+	echo
+	echo "Process multiple files:"
+	echo "find -iname \"*.mkv\" -exec mkv-remove-language '{}' \"lang\" \;"
+	echo
+	exit
+fi
+
+
+hash mkvmerge 2>/dev/null || { echo >&2 "Error: Command mkvmerge not found"; exit 1; }
+
+
+file_name=$1
+remove_language=$2
+
+IFS='
+'
+
+tracks=$(LANG=en_US.utf8 LANGUAGE=en_US.utf8 mkvmerge --identify-verbose "$file_name" | tail --lines=+2)
+
+track_ids_string=""
+for track in $tracks; do
+	[[ "$track" =~ Track\ ID\ ([0-9]+) ]] &&
+		track_id=${BASH_REMATCH[1]}
+	[[ "$track" =~ language:([a-z]+) ]] &&
+		language=${BASH_REMATCH[1]}
+	[[ "$track" =~ Track\ ID\ [0-9]+:\ ([a-z]*) ]] &&
+		track_type=${BASH_REMATCH[1]}
+
+	if [[ "$track_id" == "" ]]; then
+		echo "$track"
+		echo "Error: Can't read track id"
+		exit
+	fi
+
+	if [[ "$track_type" != "audio" ]]; then
+		continue
+	fi
+
+	if [[ "$language" == "$remove_language" ]]; then
+		track_ids_string="$track_ids_string,$track_id"
+	fi
+done
+track_ids_string=${track_ids_string:1} # remove first comma
+
+if [[ "$track_ids_string" != "" ]]; then
+	mkvmerge -o "${file_name%.*} [without $remove_language].mkv" --audio-tracks "!$track_ids_string" "$file_name"
+fi

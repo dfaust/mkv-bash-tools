@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Version 1
+# Version 2
 #
 # (C) 2016 Daniel Faust <hessijames@gmail.com>
 #
@@ -23,7 +23,7 @@
 if [[ "$1" == "" ]] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
 	echo
 	echo "Process single file:"
-	echo "mkv-remove-language file.mkv"
+	echo "mkv-remove-language file.mkv lang"
 	echo
 	echo "Process multiple files:"
 	echo "find -iname \"*.mkv\" -exec mkv-remove-language '{}' \"lang\" \;"
@@ -44,6 +44,7 @@ IFS='
 tracks=$(LANG=en_US.utf8 LANGUAGE=en_US.utf8 mkvmerge --identify-verbose "$file_name" | tail --lines=+2)
 
 track_ids_string=""
+found_languages=()
 for track in $tracks; do
 	[[ "$track" =~ Track\ ID\ ([0-9]+) ]] &&
 		track_id=${BASH_REMATCH[1]}
@@ -55,7 +56,7 @@ for track in $tracks; do
 	if [[ "$track_id" == "" ]]; then
 		echo "$track"
 		echo "Error: Can't read track id"
-		exit
+		exit 1
 	fi
 
 	if [[ "$track_type" != "audio" ]]; then
@@ -64,10 +65,18 @@ for track in $tracks; do
 
 	if [[ "$language" == "$remove_language" ]]; then
 		track_ids_string="$track_ids_string,$track_id"
+	else
+		found_languages+=("$language")
 	fi
 done
 track_ids_string=${track_ids_string:1} # remove first comma
 
 if [[ "$track_ids_string" != "" ]]; then
 	mkvmerge -o "${file_name%.*} [without $remove_language].mkv" --audio-tracks "!$track_ids_string" "$file_name"
+else
+	echo "Can't find languge \"$remove_language\", doing nothing"
+	echo "Available languages are:"
+	for language in ${found_languages[@]}; do
+		echo "  $language"
+	done
 fi

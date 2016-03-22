@@ -5,6 +5,8 @@ A BASH script that removes the audio track with the specified language from a ma
 
 Requires mkvmerge
 
+![Screen shot of mkv-remove-language](mkv-remove-language.png)
+
 Usage:  
 `chmod +x mkv-remove-language`  
 `./mkv-remove-language "My File.mkv" "eng"`  

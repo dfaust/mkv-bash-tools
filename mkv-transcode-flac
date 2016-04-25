@@ -84,36 +84,36 @@ for track in $tracks; do
 
 	track_ids_string="$track_ids_string,$track_id"
 
-	echo "--audio-tracks" >> $option_file_name
-	echo "0" >> $option_file_name
+	echo "--audio-tracks" >> "$option_file_name"
+	echo "0" >> "$option_file_name"
 	if [[ "$track_name" != "" ]]; then
 		track_name=${track_name/\\s/\ }  # replace '\s' with ' '
 		track_name=${track_name/\\2/\"}  # replace '\2' with '"'
 		track_name=${track_name/\\c/:}   # replace '\c' with ':'
 		track_name=${track_name/\\h/#}   # replace '\h' with '#'
-# 		track_name=${track_name/\\\\/\\} # replace '\\' with '\' BUG doesn't work
+# 		track_name=${track_name/\\\\/\\} # replace '\\' with '\' doesn't work
 		track_name=$(echo "$track_name" | sed -r 's/(flac|pcm)/Ogg Vorbis/i')
-		echo "--track-name" >> $option_file_name
-		echo "0:$track_name" >> $option_file_name
+		echo "--track-name" >> "$option_file_name"
+		echo "0:$track_name" >> "$option_file_name"
 	fi
 	if [[ "$language" != "" ]]; then
-		echo "--language" >> $option_file_name
-		echo "0:$language" >> $option_file_name
+		echo "--language" >> "$option_file_name"
+		echo "0:$language" >> "$option_file_name"
 	fi
 	if [[ "$default_track" != "" ]]; then
-		echo "--default-track" >> $option_file_name
-		echo "0:$default_track" >> $option_file_name
+		echo "--default-track" >> "$option_file_name"
+		echo "0:$default_track" >> "$option_file_name"
 	fi
 	if [[ "$forced_track" != "" ]]; then
-		echo "--forced-track" >> $option_file_name
-		echo "0:$forced_track" >> $option_file_name
+		echo "--forced-track" >> "$option_file_name"
+		echo "0:$forced_track" >> "$option_file_name"
 	fi
-	echo "$tmp_dir/$track_id.ogg" >> $option_file_name
+	echo "$tmp_dir/$track_id.ogg" >> "$option_file_name"
 done
 track_ids_string=${track_ids_string:1} # remove first comma
 
 if [[ "$track_ids_string" != "" ]]; then
-	mkvmerge -o "${file_name%.*} [Ogg Vorbis].mkv" --audio-tracks "!$track_ids_string" "$file_name" @$option_file_name
+	mkvmerge -o "${file_name%.*} [Ogg Vorbis].mkv" --audio-tracks "!$track_ids_string" "$file_name" "@$option_file_name"
 else
 	echo "No flac or pcm stream found, doing nothing"
 fi

@@ -36,3 +36,21 @@ This will create a new file called "My File [without eng].mkv".
 
 For batch processing all .mkv files in the current directoy copy mkv-remove-language to a directory in your PATH and execute:  
 `find -iname "*.mkv" -exec mkv-remove-language '{}' "lang" \;`
+
+## mkv-extract-subtitles
+
+A BASH script that removes the audio track with the specified language from a matroska file.
+
+### Depends on
+mkvmerge  
+mkvextract  
+
+![Screen shot of mkv-extract-subtitles](mkv-extract-subtitles.png)
+
+Usage:  
+`chmod +x mkv-extract-subtitles`  
+`./mkv-extract-subtitles "My File.mkv"`  
+This will create a new file for each subtitle in the current directory.
+
+For batch processing all .mkv files in the current directoy copy mkv-extract-subtitles to a directory in your PATH and execute:  
+`find -iname "*.mkv" -exec mkv-extract-subtitles '{}'\;`

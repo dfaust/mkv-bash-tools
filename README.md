@@ -1,18 +1,38 @@
-# mkv-transcode-flac
+# mkv-bash-tools
+
+## mkv-transcode-flac
+
 A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis while preserving the track's name and language and it's default and forced flags.
 
 ![Screen shot of mkv-transcode-flac](mkv-transcode-flac.png)
 
-## Depends on
+### Depends on
 mktemp  
 mkvmerge  
 mkvextract  
 oggenc (with FLAC decoder enabled)
 
-## Usage
+### Usage
 `chmod +x mkv-transcode-flac`  
 `./mkv-transcode-flac "My File.mkv"`  
 This will create a new file called "My File [Ogg Vorbis].mkv".
 
 For batch converting all .mkv files in the current directoy copy mkv-transcode-flac to a directory in your PATH and execute:  
 `find -iname "*.mkv" -exec mkv-transcode-flac '{}' \;`
+
+## mkv-remove-language
+
+A BASH script that removes the audio track with the specified language from a matroska file.
+
+### Depends on
+mkvmerge  
+
+![Screen shot of mkv-remove-language](mkv-remove-language.png)
+
+Usage:  
+`chmod +x mkv-remove-language`  
+`./mkv-remove-language "My File.mkv" "eng"`  
+This will create a new file called "My File [without eng].mkv".
+
+For batch processing all .mkv files in the current directoy copy mkv-remove-language to a directory in your PATH and execute:  
+`find -iname "*.mkv" -exec mkv-remove-language '{}' "lang" \;`

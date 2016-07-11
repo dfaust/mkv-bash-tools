@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Version 2
+# Version 3
 #
 # (C) 2016 Daniel Faust <hessijames@gmail.com>
 #
@@ -46,6 +46,7 @@ tracks=$(LANG=en_US.utf8 LANGUAGE=en_US.utf8 mkvmerge --identify-verbose "$file_
 track_ids_string=""
 found_languages=()
 for track in $tracks; do
+	track_id=""
 	[[ "$track" =~ Track\ ID\ ([0-9]+) ]] &&
 		track_id=${BASH_REMATCH[1]}
 	[[ "$track" =~ language:([a-z]+) ]] &&
@@ -54,9 +55,7 @@ for track in $tracks; do
 		track_type=${BASH_REMATCH[1]}
 
 	if [[ "$track_id" == "" ]]; then
-		echo "$track"
-		echo "Error: Can't read track id"
-		exit 1
+		continue
 	fi
 
 	if [[ "$track_type" != "audio" ]]; then

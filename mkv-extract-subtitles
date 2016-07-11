@@ -89,5 +89,5 @@ for track in $tracks; do
 		name="$name, $track_name"
 	fi
 
-	mkvextract tracks "$file_name" $track_id:"${file_name%.*} [$name].$ext"
+	mkvextract tracks "$file_name" "$track_id:${file_name%.*} [$name].$ext"
 done

@@ -75,7 +75,7 @@ if [[ "$track_ids_string" != "" ]]; then
 else
 	echo "Can't find languge \"$remove_language\", doing nothing"
 	echo "Available languages are:"
-	for language in ${found_languages[@]}; do
+	for language in "${found_languages[@]}"; do
 		echo "  $language"
 	done
 fi

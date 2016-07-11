@@ -1,5 +1,7 @@
 # mkv-bash-tools
 
+[![Issue Count](https://codeclimate.com/github/HessiJames/mkv-bash-tools/badges/issue_count.svg)](https://codeclimate.com/github/HessiJames/mkv-bash-tools)
+
 ## mkv-transcode-flac
 
 A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis while preserving the track's name and language and it's default and forced flags.

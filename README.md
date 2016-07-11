@@ -31,7 +31,7 @@ mkvmerge
 
 ![Screen shot of mkv-remove-language](mkv-remove-language.png)
 
-Usage:  
+### Usage:  
 `chmod +x mkv-remove-language`  
 `./mkv-remove-language "My File.mkv" "eng"`  
 This will create a new file called "My File [without eng].mkv".
@@ -49,7 +49,7 @@ mkvextract
 
 ![Screen shot of mkv-extract-subtitles](mkv-extract-subtitles.png)
 
-Usage:  
+### Usage:  
 `chmod +x mkv-extract-subtitles`  
 `./mkv-extract-subtitles "My File.mkv"`  
 This will create a new file for each subtitle in the current directory.

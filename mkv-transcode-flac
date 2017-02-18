@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Version 4
+# Version 5
 #
-# (C) 2016 Daniel Faust <hessijames@gmail.com>
+# (C) 2017 Daniel Faust <hessijames@gmail.com>
 #
-# A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis 
-# while preserving the track's name and language and it's default and forced flags.
+# A BASH script that transcodes all FLAC tracks of a matroska file to Ogg Vorbis
+# while preserving the track's name and language and it's default and forced flags as well as its delay.
 #
 # Requires mktemp, mkvmerge, mkvextract and oggenc (with FLAC decoder enabled)
 #
@@ -77,11 +77,13 @@ for track in $tracks; do
 		continue
 	fi
 
+	mkvextract timecodes_v2 "$file_name" "$track_id:$tmp_dir/$track_id.ts"
 	mkvextract tracks "$file_name" "$track_id:$tmp_dir/$track_id.$ext"
 	oggenc --quality=6 -o "$tmp_dir/$track_id.ogg" "$tmp_dir/$track_id.$ext"
 	rm "$tmp_dir/$track_id.$ext"
 
 	track_ids_string="$track_ids_string,$track_id"
+	delay=$(sed -n "2p" "$tmp_dir/$track_id.ts")
 
 	echo "--audio-tracks" >> "$option_file_name"
 	echo "0" >> "$option_file_name"
@@ -106,6 +108,10 @@ for track in $tracks; do
 	if [[ "$forced_track" != "" ]]; then
 		echo "--forced-track" >> "$option_file_name"
 		echo "0:$forced_track" >> "$option_file_name"
+	fi
+	if [[ $delay != 0 ]]; then
+		echo "--sync" >> "$option_file_name"
+		echo "0:$delay" >> "$option_file_name"
 	fi
 	echo "$tmp_dir/$track_id.ogg" >> "$option_file_name"
 done

@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# Version 1
+#
+# (C) 2017 Daniel Faust <hessijames@gmail.com>
+#
+# A BASH script that transcodes all DTS-HD tracks of a matroska file to DTS Core
+# while preserving the track's name and language and it's default and forced flags as well as its delay.
+#
+# Requires mktemp, mkvmerge, mkvextract and ffmpeg (version 3.1 or higher)
+#
+# Usage:
+# chmod +x mkv-transcode-dts
+# ./mkv-transcode-dts "My File.mkv"
+#
+# This will create a new file called "My File [DTS Core].mkv".
+#
+# For batch converting all .mkv files in the current directoy
+# copy mkv-transcode-dts to a directory in your PATH and execute:
+#
+# find -iname "*.mkv" -exec mkv-transcode-dts '{}' \;
+
+
+if [[ "$1" == "" ]] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+	echo
+	echo "Transcode single file:"
+	echo "mkv-transcode-dts file.mkv"
+	echo
+	echo "Transcode multiple files:"
+	echo "find -iname \"*.mkv\" -exec mkv-transcode-dts '{}' \;"
+	echo
+	exit
+fi
+
+
+hash mktemp 2>/dev/null || { echo >&2 "Error: Command mktemp not found"; exit 1; }
+hash mkvmerge 2>/dev/null || { echo >&2 "Error: Command mkvmerge not found"; exit 1; }
+hash mkvextract 2>/dev/null || { echo >&2 "Error: Command mkvextract not found"; exit 1; }
+hash ffmpeg 2>/dev/null || { echo >&2 "Error: Command ffmpeg not found"; exit 1; }
+
+
+file_name=$1
+
+tmp_dir=$(mktemp -d)
+
+trap 'rm -r "$tmp_dir"' EXIT
+
+option_file_name="$tmp_dir/options_file"
+
+IFS='
+'
+
+tracks=$(LANG=en_US.utf8 LANGUAGE=en_US.utf8 mkvmerge --identify-verbose "$file_name" | grep "DTS-HD Master Audio")
+
+track_ids_string=""
+for track in $tracks; do
+	track_id=""
+	[[ "$track" =~ Track\ ID\ ([0-9]+) ]] &&
+		track_id=${BASH_REMATCH[1]}
+	[[ "$track" =~ language:([a-z]+) ]] &&
+		language=${BASH_REMATCH[1]}
+	[[ "$track" =~ track_name:([^ ]+) ]] &&
+		track_name=${BASH_REMATCH[1]}
+	[[ "$track" =~ default_track:([0-1]) ]] &&
+		default_track=${BASH_REMATCH[1]}
+	[[ "$track" =~ forced_track:([0-1]) ]] &&
+		forced_track=${BASH_REMATCH[1]}
+
+	if [[ "$track_id" == "" ]]; then
+		continue
+	fi
+
+	mkvextract timecodes_v2 "$file_name" "$track_id:$tmp_dir/$track_id.ts"
+	mkvextract tracks "$file_name" "$track_id:$tmp_dir/$track_id.hdma.dts"
+	ffmpeg -i "$tmp_dir/$track_id.hdma.dts" -bsf:a dca_core -c:a copy "$tmp_dir/$track_id.core.dts"
+	rm "$tmp_dir/$track_id.hdma.dts"
+
+	track_ids_string="$track_ids_string,$track_id"
+	delay=$(sed -n "2p" "$tmp_dir/$track_id.ts")
+
+	echo "--audio-tracks" >> "$option_file_name"
+	echo "0" >> "$option_file_name"
+	if [[ "$track_name" != "" ]]; then
+		track_name=${track_name/\\s/\ }  # replace '\s' with ' '
+		track_name=${track_name/\\2/\"}  # replace '\2' with '"'
+		track_name=${track_name/\\c/:}   # replace '\c' with ':'
+		track_name=${track_name/\\h/#}   # replace '\h' with '#'
+# 		track_name=${track_name/\\\\/\\} # replace '\\' with '\' doesn't work
+		track_name=$(echo "$track_name" | sed -r 's/(dts-hd|dts hd|dts-ma|dts ma)/DTS/i')
+		echo "--track-name" >> "$option_file_name"
+		echo "0:$track_name" >> "$option_file_name"
+	fi
+	if [[ "$language" != "" ]]; then
+		echo "--language" >> "$option_file_name"
+		echo "0:$language" >> "$option_file_name"
+	fi
+	if [[ "$default_track" != "" ]]; then
+		echo "--default-track" >> "$option_file_name"
+		echo "0:$default_track" >> "$option_file_name"
+	fi
+	if [[ "$forced_track" != "" ]]; then
+		echo "--forced-track" >> "$option_file_name"
+		echo "0:$forced_track" >> "$option_file_name"
+	fi
+	if [[ $delay != 0 ]]; then
+		echo "--sync" >> "$option_file_name"
+		echo "0:$delay" >> "$option_file_name"
+	fi
+	echo "$tmp_dir/$track_id.core.dts" >> "$option_file_name"
+done
+track_ids_string=${track_ids_string:1} # remove first comma
+
+if [[ "$track_ids_string" != "" ]]; then
+	mkvmerge -o "${file_name%.*} [DTS Core].mkv" --audio-tracks "!$track_ids_string" "$file_name" "@$option_file_name"
+else
+	echo "No dts-hd stream found, doing nothing"
+fi

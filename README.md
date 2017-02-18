@@ -26,6 +26,27 @@ For batch converting all .mkv files in the current directoy copy mkv-transcode-f
 `find -iname "*.mkv" -exec mkv-transcode-flac '{}' \;`
 
 
+## mkv-transcode-dts
+
+A BASH script that transcodes all DTS-HD Master Audio tracks of a matroska file to DTS Core while preserving the track's name and language and it's default and forced flags as well as its delay.
+
+### Depends on
+
+mktemp  
+mkvmerge  
+mkvextract  
+ffmpeg (version 3.1 or higher)
+
+### Usage
+
+`chmod +x mkv-transcode-dts`  
+`./mkv-transcode-dts "My File.mkv"`  
+This will create a new file called "My File [DTS Core].mkv".
+
+For batch converting all .mkv files in the current directoy copy mkv-transcode-dts to a directory in your PATH and execute:  
+`find -iname "*.mkv" -exec mkv-transcode-dts '{}' \;`
+
+
 ## mkv-remove-language
 
 A BASH script that removes the audio track with the specified language from a matroska file.

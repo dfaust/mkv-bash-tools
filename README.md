@@ -69,7 +69,7 @@ For batch processing all .mkv files in the current directoy copy mkv-remove-lang
 
 ## mkv-extract-subtitles
 
-A BASH script that removes the audio track with the specified language from a matroska file.
+A BASH script that extracts subtitles from a matroska file.
 
 ### Depends on
 

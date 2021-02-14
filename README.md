@@ -2,6 +2,9 @@
 
 [![Issue Count](https://codeclimate.com/github/HessiJames/mkv-bash-tools/badges/issue_count.svg)](https://codeclimate.com/github/HessiJames/mkv-bash-tools)
 
+## Warning: These scripts are outdated and won't work with current versions of mkvmerge
+
+I'm keeping them here because I might update them at some point - but no promises.
 
 ## mkv-transcode-flac
 
